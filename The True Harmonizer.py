@@ -80,7 +80,11 @@ for note in X:
         notelength = endtime - starttime
         notelength.append()
 
-    i += 1
+        #if i==2 then put the number back down to 0 because we have a full group, else count up
+        if (i == 2):
+            i = 0
+        else:
+            i += 1
 
 
 # X_train, X_test, y_train, y_test = train_test_split(X, Y)
