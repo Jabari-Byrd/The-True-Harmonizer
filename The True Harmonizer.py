@@ -66,6 +66,7 @@ input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
 #   input_track2stuff
 #   input_midifile(after append),
 #   input_track2endtrack
+#   input_end_of_file
 # ]
 
 # print("hi")
@@ -347,4 +348,5 @@ print(input_midifile)
 #   input_track2stuff
 #   input_midifile(after append),
 #   input_track2endtrack
+#   input_end_of_file
 # ]
