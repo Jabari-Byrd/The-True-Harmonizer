@@ -29,7 +29,8 @@ midifile = pd.read_csv('csv_string.csv', header=None, names=[
 
 # creates a data frame of the user input
 input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
-    'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
+    'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity', 'Extra'], usecols=[0, 1, 2, 3, 4, 5, 6])
+
 
 # seperates the important format stuff from the note stuff in the midi file
 input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
@@ -338,15 +339,10 @@ for index, note in input_end_of_file.iterrows():
 
 
 print(input_midifile)
-# print(input_midifile.to_csv(sep=',', index=0, header=0))
+input_midifile.to_csv('test.csv', index=0, header=0)
 
-# The order of the data bases will be
-# [
-#   input_track1stuff,
-#   input_midifile (before appending),
-#   input_track1endtrack,
-#   input_track2stuff
-#   input_midifile(after append),
-#   input_track2endtrack
-#   input_end_of_file
-# ]
+# midi_object=py_midicsv.csv_to_midi(input_midifile.to_csv(sep='\n', index=0, header=0))
+
+# with open("harmonized.mid", "wb") as output_file:
+#     midi_writer = py_midicsv.FileWriter(output_file)
+#     midi_writer.write(midi_object)
