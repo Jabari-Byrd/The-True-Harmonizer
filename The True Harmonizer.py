@@ -51,6 +51,7 @@ for note in X:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
+            ThreeNotes.append(totalstarttime)
 
         # if its the final note of the group, you need to use the notes end time as the total end time too.
         elif i == 2:
@@ -62,9 +63,7 @@ for note in X:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             totalendtime, endtime = end['Time']
-
-            totaltime = totalendtime - totalstarttime
-            totaltime.append()
+            ThreeNotes.append(totalendtime)
 
         else:
             starttime = note['Time']  # used to know the length of the note
@@ -76,11 +75,13 @@ for note in X:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
 
-        note.append()
-        notelength = endtime - starttime
-        notelength.append()
+        ThreeNotes.append(note)  # adds note to the ThreeNotes array
+        notelength = endtime - starttime  # calculates the length of the note
 
-        #if i==2 then put the number back down to 0 because we have a full group, else count up
+        # adds the note length calculation to the ThreeNotes array
+        ThreeNotes.append(notelength)
+
+        # if i==2 then put the number back down to 0 because we have a full group, else count up
         if (i == 2):
             i = 0
         else:
