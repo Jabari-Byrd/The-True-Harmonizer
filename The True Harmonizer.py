@@ -1,7 +1,8 @@
 import py_midicsv
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
 
 # creates a csv string from the midi
 csv_string = py_midicsv.midi_to_csv(
@@ -30,7 +31,7 @@ input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
 
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
 
-print(input_midifile.head())
+# print(input_midifile.head())
 
 # only takes in the information with the " Note_on_c" in it
 midifile = midifile[midifile.Note_on_c == ' Note_on_c']
@@ -47,6 +48,8 @@ def convert_to_numbers(X):
     i = 0  # counter used to split up the notes
 
     totalstarttime = 0  # used to find the complete start time of the note group
+
+    totalendtime = 0
 
     starttime = 0  # used to find the start time for a specific note
     endtime = 0
@@ -108,7 +111,7 @@ def convert_to_numbers(X):
                 SetOfNotes.append(starttime)
 
             # adds note to the SetOfNotes array
-            SetOfNotes.append(note['Note'])
+            SetOfNotes.append(int(note['Note']))
             notelength = endtime - starttime  # calculates the length of the note
             # print(endtime)
             # print("hi")
@@ -152,7 +155,7 @@ def MatchBasses(Y, BigMombaNoteArray):
         startrange = notesets[0]
         # the end time for the range of particular notes in the set
         endrange = notesets[-1]
-
+        endtime=0
         BassSet = []
         i = 0
 
@@ -168,6 +171,12 @@ def MatchBasses(Y, BigMombaNoteArray):
                     LastBassUsed = index2  # make this the last used bass note
                     # print("hi")
                     BassSet.append(basses)  # add this bass to the Bass Set
+                    for index3,bass in Y.iterrows():
+                        if (index3 > index2):
+                            if (bass['Note'] == basses['Note']):
+                                if (bass['Velocity'] == basses['Velocity']):
+                                    endtime = bass['Time']
+                                    break
 
                     i += 1  # add one to the counter of basses
 
@@ -189,6 +198,27 @@ def MatchBasses(Y, BigMombaNoteArray):
                     continue
 
     return BassMambaDamba
+
+
+convertedx = convert_to_numbers(X)
+convertedy = MatchBasses(Y, convertedx)
+convertedinput = convert_to_numbers(input_midifile)
+
+print(convertedinput)
+
+yarray = []
+for i in range(len(convertedy)):
+    yarray.append(i)
+
+# print(convertedx)
+
+neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
+neighbor.fit(convertedx, yarray)
+predictions = neighbor.predict(convertedinput)
+
+print(predictions)
+print(input_midifile)
+print(convertedy)
 
 # print(BassMambaDamba)
 
