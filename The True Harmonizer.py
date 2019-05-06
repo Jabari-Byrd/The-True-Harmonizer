@@ -7,15 +7,30 @@ from sklearn.model_selection import train_test_split
 csv_string = py_midicsv.midi_to_csv(
     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
+csv_input = py_midicsv.midi_to_csv("Music\Input\lose_yourself_topline.mid")
+
 # writes the csv string into a file so that its easier for panda to turn it into a data fram
 file = open("csv_string.csv", "w")
 for data in csv_string:
     file.write("%s" % data)
 file.close()
 
+file = open("csv_input.csv", "w")
+for data in csv_input:
+    file.write("%s" % data)
+file.close()
+
 # creates a data frame from the csv file
 midifile = pd.read_csv('csv_string.csv', header=None, names=[
                        'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
+
+input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
+    'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
+
+
+input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
+
+print(input_midifile.head())
 
 # only takes in the information with the " Note_on_c" in it
 midifile = midifile[midifile.Note_on_c == ' Note_on_c']
@@ -28,117 +43,154 @@ X = midifile[midifile.Track != 2]
 Y = midifile[midifile.Track != 1]
 
 
-i = 0  # counter used to split up the notes
+def convert_to_numbers():
+    i = 0  # counter used to split up the notes
 
-totalstarttime = 0  # used to find the complete start time of the note group
+    totalstarttime = 0  # used to find the complete start time of the note group
 
-starttime = 0  # used to find the start time for a specific note
-endtime = 0
+    starttime = 0  # used to find the start time for a specific note
+    endtime = 0
 
-SetOfNotes = []  # the array of the 3 notes that will be added to the main array later
+    SetOfNotes = []  # the array of the 3 notes that will be added to the main array later
 
-# This is the array of SetOfNotes arrays.  This is the one that the K-Nearest-Neighbor will be looking at
-BigMombaNoteArray = []
+    # This is the array of SetOfNotes arrays.  This is the one that the K-Nearest-Neighbor will be looking at
+    BigMombaNoteArray = []
 
-# this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
-numberofnotes = 2
+    # this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
+    numberofnotes = 2
 
-# a bunch of code to pick out groups of notes and put it into the SetOfNotes array.
-# The features are the note, note length, and note start time
-for index, note in X.iterrows():
-    if (note['Velocity'] > 0):  # only use notes that have been played, not ones that have been stopped
+    # a bunch of code to pick out groups of notes and put it into the SetOfNotes array.
+    # The features are the note, note length, and note start time
+    for index, note in X.iterrows():
+        # only use notes that have been played, not ones that have been stopped
+        if (note['Velocity'] > 0):
 
-        # if its the first note of the group, you need to use the notes start time as the total start time too
-        if i == 0:
+            # if its the first note of the group, you need to use the notes start time as the total start time too
+            if i == 0:
 
-            totalstarttime = note['Time']
+                totalstarttime = note['Time']
 
-            # find when the note has stopped and make the the end time
-            for index2, end in X.iterrows():
-                if index2 > index:
-                    if end['Note'] == note['Note']:
-                        if end['Velocity'] == 0:
-                            endtime = end['Time']
-                            break
+                # find when the note has stopped and make the the end time
+                for index2, end in X.iterrows():
+                    if index2 > index:
+                        if end['Note'] == note['Note']:
+                            if end['Velocity'] == 0:
+                                endtime = end['Time']
+                                break
 
-            # the start of the array will be the total start time so we can know what range the
-            # notes lie and and make it easier to find the bass notes
-            SetOfNotes.append(totalstarttime)
+                # the start of the array will be the total start time so we can know what range the
+                # notes lie and and make it easier to find the bass notes
+                SetOfNotes.append(totalstarttime)
 
-        # if its the final note of the group, you need to use the notes end time as the total end time too.
-        elif i == numberofnotes:
-            starttime = note['Time']  # used to know the length of the note
+            # if its the final note of the group, you need to use the notes end time as the total end time too.
+            elif i == numberofnotes:
+                starttime = note['Time']  # used to know the length of the note
 
-            # find when the note has stopped and make the the end time and total end time
-            for index2, end in X.iterrows():
-                if index2 > index:
-                    if end['Note'] == note['Note']:
-                        if end['Velocity'] == 0:
-                            totalendtime = end['Time']
-                            break
-            SetOfNotes.append(starttime)
+                # find when the note has stopped and make the the end time and total end time
+                for index2, end in X.iterrows():
+                    if index2 > index:
+                        if end['Note'] == note['Note']:
+                            if end['Velocity'] == 0:
+                                totalendtime = end['Time']
+                                break
+                SetOfNotes.append(starttime)
 
-        else:
-            starttime = note['Time']  # used to know the length of the note
+            else:
+                starttime = note['Time']  # used to know the length of the note
 
-            # find when the note has stopped and make that the end time
-            for index2, end in X.iterrows():
-                if index2 > index:
-                    if end['Note'] == note['Note']:
-                        if end['Velocity'] == 0:
-                            endtime = end['Time']
-                            break
-            SetOfNotes.append(starttime)
+                # find when the note has stopped and make that the end time
+                for index2, end in X.iterrows():
+                    if index2 > index:
+                        if end['Note'] == note['Note']:
+                            if end['Velocity'] == 0:
+                                endtime = end['Time']
+                                break
+                SetOfNotes.append(starttime)
 
-        SetOfNotes.append(note['Note'])  # adds note to the SetOfNotes array
-        notelength = endtime - starttime  # calculates the length of the note
-        # print(endtime)
-        # print("hi")
+            # adds note to the SetOfNotes array
+            SetOfNotes.append(note['Note'])
+            notelength = endtime - starttime  # calculates the length of the note
+            # print(endtime)
+            # print("hi")
 
-        # adds the note length calculation to the SetOfNotes array
+            # adds the note length calculation to the SetOfNotes array
 
-        # if i==2 then put the number back down to 0 because we have a full group, else count up.
-        # It also appends the totalendtime to the SetOfNotesArray and then emptys that array for
-        # the next three notes.  Also add the array to the super huge one.
-        if (i == numberofnotes):
-            i = 0
+            # if i==2 then put the number back down to 0 because we have a full group, else count up.
+            # It also appends the totalendtime to the SetOfNotesArray and then emptys that array for
+            # the next three notes.  Also add the array to the super huge one.
+            if (i == numberofnotes):
+                i = 0
 
-            # the end of the array will be the total end time so we can know what range the
-            # notes lie and and make it easier to find the bass notes
-            SetOfNotes.append(totalendtime)
+                # the end of the array will be the total end time so we can know what range the
+                # notes lie and and make it easier to find the bass notes
+                SetOfNotes.append(totalendtime)
 
-            BigMombaNoteArray.append(SetOfNotes)
+                BigMombaNoteArray.append(SetOfNotes)
 
-            SetOfNotes = []
+                SetOfNotes = []
 
-        else:
-            SetOfNotes.append(notelength)
-            i += 1
-
-index = 0
-i = 0
-EvenBiggerMomba = []
-
-for notesets in BigMombaNoteArray:
-    startrange = notesets[0]
-    endrange = notesets[-1]
-    for index2, basses in Y.iterrows():
-        if (index2 > index):
-            index = index2
-            print(index)
-            if (basses['Time'] in range(startrange, endrange)):
-                print("hi")
-                SetOfNotes.append(basses)
+            else:
+                SetOfNotes.append(notelength)
                 i += 1
-                if (i == 2):
-                    EvenBiggerMomba.append(zip(notesets, basses))
-                    i = 0
-                    index = 0
+
+
+def MatchBasses():
+    LastBassUsed = 0  # the last bass note that was matched to a treble
+    i = 0  # counter used to make sure that you dont use more than 3 basses
+    BassMambaDamba = []  # the set of bassnotes that match with the treble
+
+    BassSet = []
+
+    # print(len(BigMombaNoteArray))
+
+    # look through all the sets of notes in the BigMombaNoteArray for matching bass notes
+    for notesets in BigMombaNoteArray:
+        # print(notesets)
+        # the start time for the range of particular notes in the set
+        startrange = notesets[0]
+        # the end time for the range of particular notes in the set
+        endrange = notesets[-1]
+
+        BassSet = []
+        i = 0
+
+        # look through all the bass notes to find a match with the treble set
+        for index2, basses in Y.iterrows():
+
+            # checks to make sure that the bass you are looking at is not repeated
+            if (index2 > LastBassUsed):
+
+                # if the tick count of the bass is in the range of the treble set, match it up
+                if (int(basses['Time']) in range(startrange, endrange)):
+
+                    LastBassUsed = index2  # make this the last used bass note
+                    # print("hi")
+                    BassSet.append(basses)  # add this bass to the Bass Set
+
+                    i += 1  # add one to the counter of basses
+
+                    # if there is 3 basses in a set, break the loop
+                    if (i == 3):
+                        # print(notesets)
+                        # print(len(BassSet))
+                        BassMambaDamba.append(BassSet)
+                        break
+
+                # if the basses are at a higher tick count, you have used all your basses you can within rang so break the loop
+                elif (basses['Time'] > endrange):
+                    # print(notesets)
+                    BassMambaDamba.append(BassSet)
                     break
 
+                # else you still have more to search through
+                else:
+                    continue
 
-print(EvenBiggerMomba)
+# print(BassMambaDamba)
 
+# print(x)
+# print("hi")
+# print(y)
 
 # print(BigMombaNoteArray[0])
 
