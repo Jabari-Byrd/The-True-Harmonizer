@@ -2,63 +2,85 @@ import py_midicsv
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import classification_report, confusion_matrix
 
+# creates a csv string from the midi
 csv_string = py_midicsv.midi_to_csv(
     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
+# writes the csv string into a file so that its easier for panda to turn it into a data fram
 file = open("csv_string.csv", "w")
 for data in csv_string:
     file.write("%s" % data)
 file.close()
 
-information = []
-highnotes = []
-bassnotes = []
-
+# creates a data frame from the csv file
 midifile = pd.read_csv('csv_string.csv', header=None, names=[
                        'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
+# only takes in the information with the " Note_on_c" in it
 midifile = midifile[midifile.Note_on_c == ' Note_on_c']
 
-midifile = midifile.drop('Note_on_c', axis=1)
-midifile = midifile.drop('Channel', axis=1)
-midifile = midifile.drop('Velocity', axis=1)
 # print(midifile.head())
 
+# split up the data between the treble and bass
 X = midifile[midifile.Track != 2]
 Y = midifile[midifile.Track != 1]
-X = X.drop('Track', axis=1)
-Y = Y.drop('Track', axis=1)
-X = X.drop('Time', axis=1)
-Y = Y.drop('Time', axis=1)
 
-X = X.astype('int')
-Y = Y.astype('int')
 
-Y = np.resize(Y, X.shape)
-# print(Y)
+i = 0  # counter used to split up the notes
 
-X_train, X_test, y_train, y_test = train_test_split(X, Y)
+totalstarttime = 0  # used to find the complete start time of the note group
 
-scaler = StandardScaler()
+starttime = 0  # used to find the start time for a specific note
 
-scaler.fit(X_train)
+ThreeNotes = []  # the array of the 3 notes that will be added to the main array later
 
-StandardScaler(copy=True, with_mean=True, with_std=True)
 
-X_train = scaler.transform(X_train)
-X_test = scaler.transform(X_test)
+# a bunch of code to pick out groups of notes and put it into the threenotes array.
+# The features are the note, note length, and note start time
+for note in X:
+    if (note['Velocity'] > 0):  # only use notes that have been played, not ones that have been stopped
 
-mlp = MLPClassifier(activation='relu', alpha=0.0001, batch_size='auto', beta_1=.9, beta_2=.999, early_stopping=True, epsilon=1e-08, hidden_layer_sizes=(1000,1000,1000), learning_rate='adaptive',
-                    learning_rate_init=0.001, max_iter=50000, momentum=.9, nesterovs_momentum=True, power_t=.5, random_state=None, shuffle=True, solver='adam', tol=.0001, validation_fraction=.1, verbose=False, warm_start=False)
+        # if its the first note of the group, you need to use the notes start time as the total start time too
+        if i == 0:
+            totalstarttime, starttime = note['Time']
 
-mlp.fit(X_train, y_train)
+            # find when the note has stopped and make the the end time
+            for end in X:
+                if end['Time'] > note['Time']:
+                    if end['Note'] == note['Note']:
+                        if end['Velocity'] == 0:
+                            endtime = end['Time']
 
-predictions = mlp.predict(X_test)
+        # if its the final note of the group, you need to use the notes end time as the total end time too.
+        elif i == 2:
+            starttime = note['Time']  # used to know the length of the note
 
-print(confusion_matrix(y_test, predictions))
+            # find when the note has stopped and make the the end time and total end time
+            for end in X:
+                if end['Time'] > note['Time']:
+                    if end['Note'] == note['Note']:
+                        if end['Velocity'] == 0:
+                            totalendtime, endtime = end['Time']
 
-print(classification_report(y_test, predictions))
+            totaltime = totalendtime - totalstarttime
+            totaltime.append()
+
+        else:
+            starttime = note['Time']  # used to know the length of the note
+
+            # find when the note has stopped and make the the end time
+            for end in X:
+                if end['Time'] > note['Time']:
+                    if end['Note'] == note['Note']:
+                        if end['Velocity'] == 0:
+                            endtime = end['Time']
+
+        note.append()
+        notelength = endtime - starttime
+        notelength.append()
+
+    i += 1
+
+
+# X_train, X_test, y_train, y_test = train_test_split(X, Y)
