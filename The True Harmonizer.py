@@ -43,6 +43,7 @@ for note in X:
 
         # if its the first note of the group, you need to use the notes start time as the total start time too
         if i == 0:
+
             totalstarttime, starttime = note['Time']
 
             # find when the note has stopped and make the the end time
@@ -51,7 +52,13 @@ for note in X:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
+
+            # the start of the array will be the total start time so we can know what range the
+            # notes lie and and make it easier to find the bass notes
             ThreeNotes.append(totalstarttime)
+
+
+
 
         # if its the final note of the group, you need to use the notes end time as the total end time too.
         elif i == 2:
@@ -63,7 +70,13 @@ for note in X:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             totalendtime, endtime = end['Time']
+
+            # the end of the array will be the total end time so we can know what range the
+            # notes lie and and make it easier to find the bass notes
             ThreeNotes.append(totalendtime)
+
+
+
 
         else:
             starttime = note['Time']  # used to know the length of the note
@@ -74,6 +87,8 @@ for note in X:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
+
+
 
         ThreeNotes.append(note)  # adds note to the ThreeNotes array
         notelength = endtime - starttime  # calculates the length of the note
