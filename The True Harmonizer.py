@@ -239,12 +239,20 @@ for index in range(len(convertedinput)):
     for note in predictset:
         if (i == 0):
             note.at['Time'] = (note['Time'] - distance)
-            print(note)
             temp = note
-            output.append(note)
+            output=output.append(note)
+            # print(temp)
+            i+=1
         else:
             temp['Time'] += note
             temp['Velocity'] = 0
-            output.append(temp)
+            output=output.append(temp)
+            i = 0
+            temp=0
 
-print(output)
+# print(output)
+for note in output:
+    # print(note)
+    input_midifile=input_midifile.append(note)
+
+print(input_midifile)
