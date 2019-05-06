@@ -35,6 +35,9 @@ starttime = 0  # used to find the start time for a specific note
 
 ThreeNotes = []  # the array of the 3 notes that will be added to the main array later
 
+# This is the array of ThreeNotes arrays.  This is the one that the K-Nearest-Neighbor will be looking at
+BigMombaNoteArray = []
+
 
 # a bunch of code to pick out groups of notes and put it into the threenotes array.
 # The features are the note, note length, and note start time
@@ -57,9 +60,6 @@ for note in X:
             # notes lie and and make it easier to find the bass notes
             ThreeNotes.append(totalstarttime)
 
-
-
-
         # if its the final note of the group, you need to use the notes end time as the total end time too.
         elif i == 2:
             starttime = note['Time']  # used to know the length of the note
@@ -75,9 +75,6 @@ for note in X:
             # notes lie and and make it easier to find the bass notes
             ThreeNotes.append(totalendtime)
 
-
-
-
         else:
             starttime = note['Time']  # used to know the length of the note
 
@@ -88,17 +85,16 @@ for note in X:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
 
-
-
         ThreeNotes.append(note)  # adds note to the ThreeNotes array
         notelength = endtime - starttime  # calculates the length of the note
 
         # adds the note length calculation to the ThreeNotes array
         ThreeNotes.append(notelength)
 
-        # if i==2 then put the number back down to 0 because we have a full group, else count up
+        # if i==2 then put the number back down to 0 because we have a full group, else count up.  Also add the array to the super huge one
         if (i == 2):
             i = 0
+            BigMombaNoteArray.append(ThreeNotes)
         else:
             i += 1
 
