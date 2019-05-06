@@ -267,6 +267,19 @@ for index in predictionsindex:
 
 # print(predictions)
 
+#this adds that track1 format stuff to the database that we are outputing
+for index, note in input_midifile.iterrows():
+    input_track1stuff = input_track1stuff.append(note) 
+input_midifile=input_track1stuff
+
+
+#his adds the track1 end track stuff to tthe database that we are outputing
+for index, note in input_track1endtrack.iterrows():
+    input_midifile = input_midifile.append(note)
+    
+# print(input_midifile)
+
+track2endtime = 0#used to find what tick track2 ends on
 
 # looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
 for index in range(len(convertedinput)):
@@ -287,17 +300,34 @@ for index in range(len(convertedinput)):
     # does simple math find the distance between the two different initial time spots
     distance = PredictionsStart - NotesetStart
 
-    i = 0
-    temp = 0
     # print(predictset)
 
     # fixes the times for the predicted set to shift to the right spot for the input and then adds it to the dataframe with the input
     for note in predictset:
         # print(note)
-        if (i % 2 == 0):
-            note.at['Time'] = (note['Time'] - distance)
-            input_midifile = input_midifile.append(note)
+        note.at['Time'] = (note['Time'] - distance)
+
+        #keep look for the largest time point to pick what is the end tick for track 2
+        if note['Time'] > track2endtime:
+            track2endtime = note['Time']
+            
+        input_midifile = input_midifile.append(note)
+
+#adds the track2 format stuff to the output database and fixes the end track time
+for index, note in input_track2stuff:
+    if (note['Note_on_c'] == ' End_track'):
+        note.at['Time'] = track2endtime
+    input_midifile=input_midifile.append(note)
 
 
-print(input_midifile.to_csv(sep=',', index=0, header=0))
+print(input_midifile)
+# print(input_midifile.to_csv(sep=',', index=0, header=0))
 
+#The order of the data bases will be
+# [
+#   input_track1stuff,
+#   input_midifile (before appending),
+#   input_track1endtrack,
+#   input_midifile(after append),
+#   input_track2stuff (with fixed track 2 end track time)
+# ]
