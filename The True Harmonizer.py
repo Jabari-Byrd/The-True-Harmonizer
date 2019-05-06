@@ -40,8 +40,8 @@ SetOfNotes = []  # the array of the 3 notes that will be added to the main array
 # This is the array of SetOfNotes arrays.  This is the one that the K-Nearest-Neighbor will be looking at
 BigMombaNoteArray = []
 
-#this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
-numberofnotes=2
+# this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
+numberofnotes = 2
 
 # a bunch of code to pick out groups of notes and put it into the SetOfNotes array.
 # The features are the note, note length, and note start time
@@ -115,9 +115,31 @@ for index, note in X.iterrows():
             SetOfNotes.append(notelength)
             i += 1
 
+index = 0
+i = 0
+EvenBiggerMomba = []
 
-for index, note in Y.iterrows:
+for notesets in BigMombaNoteArray:
+    startrange = notesets[0]
+    endrange = notesets[-1]
+    for index2, basses in Y.iterrows():
+        if (index2 > index):
+            index = index2
+            print(index)
+            if (basses['Time'] in range(startrange, endrange)):
+                print("hi")
+                SetOfNotes.append(basses)
+                i += 1
+                if (i == 2):
+                    EvenBiggerMomba.append(zip(notesets, basses))
+                    i = 0
+                    index = 0
+                    break
 
-print(BigMombaNoteArray[0])
+
+print(EvenBiggerMomba)
+
+
+# print(BigMombaNoteArray[0])
 
 # X_train, X_test, y_train, y_test = train_test_split(X, Y)
