@@ -36,13 +36,29 @@ input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
 
 #seperates the important track 1 format stuff from the important track 2 format stuff
 input_track1stuff = input_importantstuff[input_importantstuff.Track != 2]
-input_track2stuff=input_importantstuff[input_importantstuff.Track!=1]
+input_track2stuff = input_importantstuff[input_importantstuff.Track != 1]
 
+input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_of_file'] #takes end of file thing out of track 1 since its in a wierd spot
 
-input_track1endtrack = input_importantstuff[input_importantstuff.Note_on_c == ' End_track']#saves the end of track thing for track 1 since it is in a wierd spot in the midi file
-input_endfile=input_importantstuff[input_importantstuff.Note_on_c==' End_of_file'] #saves the end  of file thing for the entire midi since it is in a wierd spot in the midi file
+# saves the end of track thing for track 1 since it is in a wierd spot in the midi file
+input_track1endtrack = input_importantstuff[input_importantstuff.Note_on_c == ' End_track']
+
+input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_track']  #takes of end of track thing from track 1 since its in a wierd spot
+
+input_track2stuff=input_track2stuff[input_track2stuff.Note_on_c!=' Header'] #takes out header from track 2 since its in a wierd spot
+
 
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
+
+
+#The order of the data bases will be
+# [
+#   input_track1stuff,
+#   input_midifile (before appending),
+#   input_track1endtrack,
+#   input_midifile(after append),
+#   input_track2stuff (with fixed track 2 end track time)
+# ]
 
 # print("hi")
 
