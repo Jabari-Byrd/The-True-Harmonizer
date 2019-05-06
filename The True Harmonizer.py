@@ -8,6 +8,8 @@ from sklearn.neighbors import KNeighborsClassifier
 csv_string = py_midicsv.midi_to_csv(
     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
+# print(type(csv_string[0]))
+
 csv_input = py_midicsv.midi_to_csv("Music\Input\lose_yourself_topline.mid")
 
 # writes the csv string into a file so that its easier for panda to turn it into a data fram
@@ -28,8 +30,12 @@ midifile = pd.read_csv('csv_string.csv', header=None, names=[
 input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
     'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
-
+input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
+# print("hi")
+
+
+# print(input_importantstuff)
 
 # print(input_midifile.head())
 
@@ -170,14 +176,13 @@ def MatchBasses(Y, BigMombaNoteArray):
 
                     LastBassUsed = index2  # make this the last used bass note
                     # print("hi")
-                    if(basses['Velocity']>0):
+                    if(basses['Velocity'] > 0):
                         BassSet.append(basses)  # add this bass to the Bass Set
                         for index3, bass in Y.iterrows():
                             if (index3 > index2):
                                 if (bass['Note'] == basses['Note']):
-                                    if (bass['Velocity'] == basses['Velocity']):
-                                        endtime = bass['Time']
-                                        BassSet.append(endtime)
+                                    if (bass['Velocity'] == 0):
+                                        BassSet.append(bass)
                                         break
 
                     i += 1  # add one to the counter of basses
@@ -202,67 +207,69 @@ def MatchBasses(Y, BigMombaNoteArray):
     return BassMambaDamba
 
 
-convertedx = convert_to_numbers(X) #The X (train input) converted into just numbers to make it easier for knn
-convertedy = MatchBasses(Y, convertedx) #the Y (expected output) converted into the 3 closest bass for each test input
-convertedinput = convert_to_numbers(input_midifile) #the test output converted into just numbers to make it easier for knn
+# The X (train input) converted into just numbers to make it easier for knn
+convertedx = convert_to_numbers(X)
+# the Y (expected output) converted into the 3 closest bass for each test input
+convertedy = MatchBasses(Y, convertedx)
+# the test output converted into just numbers to make it easier for knn
+convertedinput = convert_to_numbers(input_midifile)
 
-# print(convertedinput)
+# print(convertedy)
 
-yarray = []  #y arraay used for the predicted indexs of the convertedy array
+yarray = []  # y arraay used for the predicted indexs of the convertedy array
 
-#loops through the number of indexs for the array and stores them in the yarray
+# loops through the number of indexs for the array and stores them in the yarray
 for i in range(len(convertedy)):
     yarray.append(i)
 
 # print(convertedx)
 
-#does all the k nearest neighbor stuff
+# does all the k nearest neighbor stuff
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
 neighbor.fit(convertedx, yarray)
 
-predictionsindex = neighbor.predict(convertedinput)  #stores the prediction indexs in an array
+# stores the prediction indexs in an array
+predictionsindex = neighbor.predict(convertedinput)
 
-predictions = []  #this is where the real predictions are stored
+predictions = []  # this is where the real predictions are stored
 
-#loops through the prediction index array and stores the correct predictions in it (by using the indexs inside the convertedy array)
+# loops through the prediction index array and stores the correct predictions in it (by using the indexs inside the convertedy array)
 for index in predictionsindex:
     predictions.append(convertedy[index])
 
 # print(predictions)
 
 
-#looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
+# looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
 for index in range(len(convertedinput)):
 
-    noteset = convertedinput[index]  #picks a specific set of input notes
-    
-    NotesetStart = int(noteset[0]) #the first note has the initial time spot for the set
+    noteset = convertedinput[index]  # picks a specific set of input notes
 
-    predictset = predictions[index] #look for the specific predicted output for the specific input
+    # the first note has the initial time spot for the set
+    NotesetStart = int(noteset[0])
+
+    # look for the specific predicted output for the specific input
+    predictset = predictions[index]
 
     # print((predictset[0])['Time'])
 
-    PredictionsStart = (predictset[0])['Time'] #looks at the initial time for the specific predicted set
+    # looks at the initial time for the specific predicted set
+    PredictionsStart = (predictset[0])['Time']
 
-    distance = PredictionsStart - NotesetStart #does simple math find the distance between the two different initial time spots
+    # does simple math find the distance between the two different initial time spots
+    distance = PredictionsStart - NotesetStart
 
     i = 0
     temp = 0
     # print(predictset)
 
-    #fixes the times for the predicted set to shift to the right spot for the input
+    # fixes the times for the predicted set to shift to the right spot for the input
     for note in predictset:
-        print(note)
-        if (i %2==0):
+        # print(note)
+        if (i % 2 == 0):
             note.at['Time'] = (note['Time'] - distance)
-            temp = note.copy(deep=False)
-            input_midifile=input_midifile.append(note)
-            i += 1
-        else:
-            temp.at['Time'] = temp['Time'] + note
-            temp.at['Velocity'] = 0
-            input_midifile=input_midifile.append(temp)
-            i += 1
-            
+            input_midifile = input_midifile.append(note)
 
-print(input_midifile)
+
+print(input_midifile.to_csv(sep=',', index=0, header=0))
+
