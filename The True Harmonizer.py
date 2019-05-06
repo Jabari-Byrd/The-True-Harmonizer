@@ -43,7 +43,7 @@ X = midifile[midifile.Track != 2]
 Y = midifile[midifile.Track != 1]
 
 
-def convert_to_numbers():
+def convert_to_numbers(X):
     i = 0  # counter used to split up the notes
 
     totalstarttime = 0  # used to find the complete start time of the note group
@@ -133,8 +133,10 @@ def convert_to_numbers():
                 SetOfNotes.append(notelength)
                 i += 1
 
+    return BigMombaNoteArray
 
-def MatchBasses():
+
+def MatchBasses(Y, BigMombaNoteArray):
     LastBassUsed = 0  # the last bass note that was matched to a treble
     i = 0  # counter used to make sure that you dont use more than 3 basses
     BassMambaDamba = []  # the set of bassnotes that match with the treble
@@ -185,6 +187,8 @@ def MatchBasses():
                 # else you still have more to search through
                 else:
                     continue
+
+    return BassMambaDamba
 
 # print(BassMambaDamba)
 
