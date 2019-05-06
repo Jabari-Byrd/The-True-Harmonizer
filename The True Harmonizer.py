@@ -314,7 +314,7 @@ for index in range(len(convertedinput)):
         input_midifile = input_midifile.append(note)
 
 #adds the track2 format stuff to the output database and fixes the end track time
-for index, note in input_track2stuff:
+for index, note in input_track2stuff.iterrows():
     if (note['Note_on_c'] == ' End_track'):
         note.at['Time'] = track2endtime
     input_midifile=input_midifile.append(note)
