@@ -35,12 +35,15 @@ totalstarttime = 0  # used to find the complete start time of the note group
 starttime = 0  # used to find the start time for a specific note
 endtime = 0
 
-ThreeNotes = []  # the array of the 3 notes that will be added to the main array later
+SetOfNotes = []  # the array of the 3 notes that will be added to the main array later
 
-# This is the array of ThreeNotes arrays.  This is the one that the K-Nearest-Neighbor will be looking at
+# This is the array of SetOfNotes arrays.  This is the one that the K-Nearest-Neighbor will be looking at
 BigMombaNoteArray = []
 
-# a bunch of code to pick out groups of notes and put it into the threenotes array.
+#this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
+numberofnotes=2
+
+# a bunch of code to pick out groups of notes and put it into the SetOfNotes array.
 # The features are the note, note length, and note start time
 for index, note in X.iterrows():
     if (note['Velocity'] > 0):  # only use notes that have been played, not ones that have been stopped
@@ -52,7 +55,7 @@ for index, note in X.iterrows():
 
             # find when the note has stopped and make the the end time
             for index2, end in X.iterrows():
-                if end['Time'] > note['Time']:
+                if index2 > index:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
@@ -60,57 +63,60 @@ for index, note in X.iterrows():
 
             # the start of the array will be the total start time so we can know what range the
             # notes lie and and make it easier to find the bass notes
-            ThreeNotes.append(totalstarttime)
+            SetOfNotes.append(totalstarttime)
 
         # if its the final note of the group, you need to use the notes end time as the total end time too.
-        elif i == 2:
+        elif i == numberofnotes:
             starttime = note['Time']  # used to know the length of the note
 
             # find when the note has stopped and make the the end time and total end time
             for index2, end in X.iterrows():
-                if end['Time'] > note['Time']:
+                if index2 > index:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             totalendtime = end['Time']
                             break
-            ThreeNotes.append(starttime)
+            SetOfNotes.append(starttime)
 
         else:
             starttime = note['Time']  # used to know the length of the note
 
             # find when the note has stopped and make that the end time
             for index2, end in X.iterrows():
-                if end['Time'] > note['Time']:
+                if index2 > index:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
                             break
-            ThreeNotes.append(starttime)
+            SetOfNotes.append(starttime)
 
-        ThreeNotes.append(note['Note'])  # adds note to the ThreeNotes array
+        SetOfNotes.append(note['Note'])  # adds note to the SetOfNotes array
         notelength = endtime - starttime  # calculates the length of the note
         # print(endtime)
         # print("hi")
 
-        # adds the note length calculation to the ThreeNotes array
+        # adds the note length calculation to the SetOfNotes array
 
         # if i==2 then put the number back down to 0 because we have a full group, else count up.
-        # It also appends the totalendtime to the ThreeNotesArray and then emptys that array for
+        # It also appends the totalendtime to the SetOfNotesArray and then emptys that array for
         # the next three notes.  Also add the array to the super huge one.
-        if (i == 2):
+        if (i == numberofnotes):
             i = 0
 
             # the end of the array will be the total end time so we can know what range the
             # notes lie and and make it easier to find the bass notes
-            ThreeNotes.append(totalendtime)
+            SetOfNotes.append(totalendtime)
 
-            BigMombaNoteArray.append(ThreeNotes)
+            BigMombaNoteArray.append(SetOfNotes)
 
-            ThreeNotes = []
+            SetOfNotes = []
 
         else:
-            ThreeNotes.append(notelength)
+            SetOfNotes.append(notelength)
             i += 1
+
+
+for index, note in Y.iterrows:
 
 print(BigMombaNoteArray[0])
 
