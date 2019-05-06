@@ -27,11 +27,23 @@ file.close()
 midifile = pd.read_csv('csv_string.csv', header=None, names=[
                        'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
+#creates a data frame of the user input
 input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
     'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
+#seperates the important format stuff from the note stuff in the midi file
 input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
+
+#seperates the important track 1 format stuff from the important track 2 format stuff
+input_track1stuff = input_importantstuff[input_importantstuff.Track != 2]
+input_track2stuff=input_importantstuff[input_importantstuff.Track!=1]
+
+
+input_track1endtrack = input_importantstuff[input_importantstuff.Note_on_c == ' End_track']#saves the end of track thing for track 1 since it is in a wierd spot in the midi file
+input_endfile=input_importantstuff[input_importantstuff.Note_on_c==' End_of_file'] #saves the end  of file thing for the entire midi since it is in a wierd spot in the midi file
+
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
+
 # print("hi")
 
 
@@ -263,7 +275,7 @@ for index in range(len(convertedinput)):
     temp = 0
     # print(predictset)
 
-    # fixes the times for the predicted set to shift to the right spot for the input
+    # fixes the times for the predicted set to shift to the right spot for the input and then adds it to the dataframe with the input
     for note in predictset:
         # print(note)
         if (i % 2 == 0):
