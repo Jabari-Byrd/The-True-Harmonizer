@@ -27,37 +27,43 @@ file.close()
 midifile = pd.read_csv('csv_string.csv', header=None, names=[
                        'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
-#creates a data frame of the user input
+# creates a data frame of the user input
 input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
     'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
-#seperates the important format stuff from the note stuff in the midi file
+# seperates the important format stuff from the note stuff in the midi file
 input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
 
-#seperates the important track 1 format stuff from the important track 2 format stuff
+# seperates the important track 1 format stuff from the important track 2 format stuff
 input_track1stuff = input_importantstuff[input_importantstuff.Track != 2]
 input_track2stuff = input_importantstuff[input_importantstuff.Track != 1]
 
-input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_of_file'] #takes end of file thing out of track 1 since its in a wierd spot
+# takes end of file thing out of track 1 since its in a wierd spot
+input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_of_file']
 
-# saves the end of track thing for track 1 since it is in a wierd spot in the midi file
-input_track1endtrack = input_importantstuff[input_importantstuff.Note_on_c == ' End_track']
+# saves the end of track thing for track 1 and 2 since it is in a wierd spot in the midi file
+input_track1endtrack = input_track1stuff[input_track1stuff.Note_on_c == ' End_track']
+input_track2endtrack = input_track2stuff[input_track2stuff.Note_on_c == ' End_track']
 
-input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_track']  #takes of end of track thing from track 1 since its in a wierd spot
+# takes of end of track thing from track 1 and 2 since its in a wierd spot
+input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_track']
+input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' End_track']
 
-input_track2stuff=input_track2stuff[input_track2stuff.Note_on_c!=' Header'] #takes out header from track 2 since its in a wierd spot
+# takes out header from track 2 since its in a wierd spot
+input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' Header']
 
 
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
 
 
-#The order of the data bases will be
+# The order of the data bases will be
 # [
 #   input_track1stuff,
 #   input_midifile (before appending),
 #   input_track1endtrack,
+#   input_track2stuff
 #   input_midifile(after append),
-#   input_track2stuff (with fixed track 2 end track time)
+#   input_track2endtrack
 # ]
 
 # print("hi")
@@ -267,19 +273,23 @@ for index in predictionsindex:
 
 # print(predictions)
 
-#this adds that track1 format stuff to the database that we are outputing
+# this adds that track1 format stuff to the database that we are outputing
 for index, note in input_midifile.iterrows():
-    input_track1stuff = input_track1stuff.append(note) 
-input_midifile=input_track1stuff
+    input_track1stuff = input_track1stuff.append(note)
+input_midifile = input_track1stuff
 
 
-#his adds the track1 end track stuff to tthe database that we are outputing
+# his adds the track1 end track stuff to tthe database that we are outputing
 for index, note in input_track1endtrack.iterrows():
     input_midifile = input_midifile.append(note)
-    
+
+# adds the track2 format stuff to the output database
+for index, note in input_track2stuff.iterrows():
+    input_midifile = input_midifile.append(note)
+
 # print(input_midifile)
 
-track2endtime = 0#used to find what tick track2 ends on
+track2endtime = 0  # used to find what tick track2 ends on
 
 # looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
 for index in range(len(convertedinput)):
@@ -307,27 +317,28 @@ for index in range(len(convertedinput)):
         # print(note)
         note.at['Time'] = (note['Time'] - distance)
 
-        #keep look for the largest time point to pick what is the end tick for track 2
+        # keep look for the largest time point to pick what is the end tick for track 2
         if note['Time'] > track2endtime:
             track2endtime = note['Time']
-            
+
         input_midifile = input_midifile.append(note)
 
-#adds the track2 format stuff to the output database and fixes the end track time
-for index, note in input_track2stuff.iterrows():
+# fixes the end track time and adds it to the end of the output database
+for index, note in input_track2endtrack.iterrows():
     if (note['Note_on_c'] == ' End_track'):
         note.at['Time'] = track2endtime
-    input_midifile=input_midifile.append(note)
+    input_midifile = input_midifile.append(note)
 
 
 print(input_midifile)
 # print(input_midifile.to_csv(sep=',', index=0, header=0))
 
-#The order of the data bases will be
+# The order of the data bases will be
 # [
 #   input_track1stuff,
 #   input_midifile (before appending),
 #   input_track1endtrack,
+#   input_track2stuff
 #   input_midifile(after append),
-#   input_track2stuff (with fixed track 2 end track time)
+#   input_track2endtrack
 # ]
