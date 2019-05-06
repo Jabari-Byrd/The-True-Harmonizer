@@ -155,7 +155,7 @@ def MatchBasses(Y, BigMombaNoteArray):
         startrange = notesets[0]
         # the end time for the range of particular notes in the set
         endrange = notesets[-1]
-        endtime=0
+        endtime = 0
         BassSet = []
         i = 0
 
@@ -171,11 +171,12 @@ def MatchBasses(Y, BigMombaNoteArray):
                     LastBassUsed = index2  # make this the last used bass note
                     # print("hi")
                     BassSet.append(basses)  # add this bass to the Bass Set
-                    for index3,bass in Y.iterrows():
+                    for index3, bass in Y.iterrows():
                         if (index3 > index2):
                             if (bass['Note'] == basses['Note']):
                                 if (bass['Velocity'] == basses['Velocity']):
                                     endtime = bass['Time']
+                                    BassSet.append(endtime)
                                     break
 
                     i += 1  # add one to the counter of basses
@@ -204,7 +205,7 @@ convertedx = convert_to_numbers(X)
 convertedy = MatchBasses(Y, convertedx)
 convertedinput = convert_to_numbers(input_midifile)
 
-print(convertedinput)
+# print(convertedinput)
 
 yarray = []
 for i in range(len(convertedy)):
@@ -214,18 +215,36 @@ for i in range(len(convertedy)):
 
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
 neighbor.fit(convertedx, yarray)
-predictions = neighbor.predict(convertedinput)
+predictionsindex = neighbor.predict(convertedinput)
+predictions = []
 
-print(predictions)
-print(input_midifile)
-print(convertedy)
+for index in predictionsindex:
+    predictions.append(convertedy[index])
 
-# print(BassMambaDamba)
+# print(predictions)
 
-# print(x)
-# print("hi")
-# print(y)
+for index in range(len(convertedinput)):
+    noteset = convertedinput[index]
+    NotesetStart = int(noteset[0])
 
-# print(BigMombaNoteArray[0])
+    predictset = predictions[index]
+    # print((predictset[0])['Time'])
+    PredictionsStart = (predictset[0])['Time']
 
-# X_train, X_test, y_train, y_test = train_test_split(X, Y)
+    distance = PredictionsStart - NotesetStart
+
+    i = 0
+    temp = 0
+    output = []
+    for note in predictset:
+        if (i == 0):
+            note.at['Time'] = (note['Time'] - distance)
+            print(note)
+            temp = note
+            output.append(note)
+        else:
+            temp['Time'] += note
+            temp['Velocity'] = 0
+            output.append(temp)
+
+print(output)
