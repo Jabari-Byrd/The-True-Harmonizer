@@ -44,10 +44,12 @@ input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_of_fi
 # saves the end of track thing for track 1 and 2 since it is in a wierd spot in the midi file
 input_track1endtrack = input_track1stuff[input_track1stuff.Note_on_c == ' End_track']
 input_track2endtrack = input_track2stuff[input_track2stuff.Note_on_c == ' End_track']
+input_end_of_file = input_track2stuff[input_track2stuff.Note_on_c == ' End_of_file']
 
 # takes of end of track thing from track 1 and 2 since its in a wierd spot
 input_track1stuff = input_track1stuff[input_track1stuff.Note_on_c != ' End_track']
 input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' End_track']
+input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' End_of_file']
 
 # takes out header from track 2 since its in a wierd spot
 input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' Header']
@@ -323,10 +325,14 @@ for index in range(len(convertedinput)):
 
         input_midifile = input_midifile.append(note)
 
-# fixes the end track time and adds it to the end of the output database
+# fixes the end track time and adds it to the output database
 for index, note in input_track2endtrack.iterrows():
     if (note['Note_on_c'] == ' End_track'):
         note.at['Time'] = track2endtime
+    input_midifile = input_midifile.append(note)
+
+# adds the end of file thing to the end of the output database
+for index, note in input_end_of_file.iterrows():
     input_midifile = input_midifile.append(note)
 
 
