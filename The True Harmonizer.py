@@ -170,14 +170,15 @@ def MatchBasses(Y, BigMombaNoteArray):
 
                     LastBassUsed = index2  # make this the last used bass note
                     # print("hi")
-                    BassSet.append(basses)  # add this bass to the Bass Set
-                    for index3, bass in Y.iterrows():
-                        if (index3 > index2):
-                            if (bass['Note'] == basses['Note']):
-                                if (bass['Velocity'] == basses['Velocity']):
-                                    endtime = bass['Time']
-                                    BassSet.append(endtime)
-                                    break
+                    if(basses['Velocity']>0):
+                        BassSet.append(basses)  # add this bass to the Bass Set
+                        for index3, bass in Y.iterrows():
+                            if (index3 > index2):
+                                if (bass['Note'] == basses['Note']):
+                                    if (bass['Velocity'] == basses['Velocity']):
+                                        endtime = bass['Time']
+                                        BassSet.append(endtime)
+                                        break
 
                     i += 1  # add one to the counter of basses
 
@@ -201,58 +202,67 @@ def MatchBasses(Y, BigMombaNoteArray):
     return BassMambaDamba
 
 
-convertedx = convert_to_numbers(X)
-convertedy = MatchBasses(Y, convertedx)
-convertedinput = convert_to_numbers(input_midifile)
+convertedx = convert_to_numbers(X) #The X (train input) converted into just numbers to make it easier for knn
+convertedy = MatchBasses(Y, convertedx) #the Y (expected output) converted into the 3 closest bass for each test input
+convertedinput = convert_to_numbers(input_midifile) #the test output converted into just numbers to make it easier for knn
 
 # print(convertedinput)
 
-yarray = []
+yarray = []  #y arraay used for the predicted indexs of the convertedy array
+
+#loops through the number of indexs for the array and stores them in the yarray
 for i in range(len(convertedy)):
     yarray.append(i)
 
 # print(convertedx)
 
+#does all the k nearest neighbor stuff
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
 neighbor.fit(convertedx, yarray)
-predictionsindex = neighbor.predict(convertedinput)
-predictions = []
 
+predictionsindex = neighbor.predict(convertedinput)  #stores the prediction indexs in an array
+
+predictions = []  #this is where the real predictions are stored
+
+#loops through the prediction index array and stores the correct predictions in it (by using the indexs inside the convertedy array)
 for index in predictionsindex:
     predictions.append(convertedy[index])
 
 # print(predictions)
 
+
+#looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
 for index in range(len(convertedinput)):
-    noteset = convertedinput[index]
-    NotesetStart = int(noteset[0])
 
-    predictset = predictions[index]
+    noteset = convertedinput[index]  #picks a specific set of input notes
+    
+    NotesetStart = int(noteset[0]) #the first note has the initial time spot for the set
+
+    predictset = predictions[index] #look for the specific predicted output for the specific input
+
     # print((predictset[0])['Time'])
-    PredictionsStart = (predictset[0])['Time']
 
-    distance = PredictionsStart - NotesetStart
+    PredictionsStart = (predictset[0])['Time'] #looks at the initial time for the specific predicted set
+
+    distance = PredictionsStart - NotesetStart #does simple math find the distance between the two different initial time spots
 
     i = 0
     temp = 0
-    output = []
-    for note in predictset:
-        if (i == 0):
-            note.at['Time'] = (note['Time'] - distance)
-            temp = note
-            output=output.append(note)
-            # print(temp)
-            i+=1
-        else:
-            temp['Time'] += note
-            temp['Velocity'] = 0
-            output=output.append(temp)
-            i = 0
-            temp=0
+    # print(predictset)
 
-# print(output)
-for note in output:
-    # print(note)
-    input_midifile=input_midifile.append(note)
+    #fixes the times for the predicted set to shift to the right spot for the input
+    for note in predictset:
+        print(note)
+        if (i %2==0):
+            note.at['Time'] = (note['Time'] - distance)
+            temp = note.copy(deep=False)
+            input_midifile=input_midifile.append(note)
+            i += 1
+        else:
+            temp.at['Time'] = temp['Time'] + note
+            temp.at['Velocity'] = 0
+            input_midifile=input_midifile.append(temp)
+            i += 1
+            
 
 print(input_midifile)
