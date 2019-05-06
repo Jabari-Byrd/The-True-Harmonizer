@@ -56,11 +56,11 @@ for index, note in X.iterrows():
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
+                            break
 
             # the start of the array will be the total start time so we can know what range the
             # notes lie and and make it easier to find the bass notes
             ThreeNotes.append(totalstarttime)
-            ThreeNotes.append(endtime)
 
         # if its the final note of the group, you need to use the notes end time as the total end time too.
         elif i == 2:
@@ -72,26 +72,27 @@ for index, note in X.iterrows():
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             totalendtime = end['Time']
+                            break
             ThreeNotes.append(starttime)
-            ThreeNotes.append(totalendtime)
 
         else:
             starttime = note['Time']  # used to know the length of the note
 
-            # find when the note has stopped and make the the end time
+            # find when the note has stopped and make that the end time
             for index2, end in X.iterrows():
                 if end['Time'] > note['Time']:
                     if end['Note'] == note['Note']:
                         if end['Velocity'] == 0:
                             endtime = end['Time']
+                            break
             ThreeNotes.append(starttime)
-            ThreeNotes.append(endtime)
 
         ThreeNotes.append(note['Note'])  # adds note to the ThreeNotes array
         notelength = endtime - starttime  # calculates the length of the note
+        # print(endtime)
+        # print("hi")
 
         # adds the note length calculation to the ThreeNotes array
-        ThreeNotes.append(notelength)
 
         # if i==2 then put the number back down to 0 because we have a full group, else count up.
         # It also appends the totalendtime to the ThreeNotesArray and then emptys that array for
@@ -108,6 +109,7 @@ for index, note in X.iterrows():
             ThreeNotes = []
 
         else:
+            ThreeNotes.append(notelength)
             i += 1
 
 print(BigMombaNoteArray[0])
