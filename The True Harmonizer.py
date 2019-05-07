@@ -21,7 +21,7 @@ csv_input = py_midicsv.midi_to_csv("Music\Input\\userinput.mid")
 
 file = open("csv_input.csv", "w")
 for data in csv_input:
-        file.write("%s" % data)
+    file.write("%s" % data)
 file.close()
 
 # creates a data frame from the csv file
@@ -236,6 +236,7 @@ def MatchBasses(Y, BigMombaNoteArray):
 
 # The X (train input) converted into just numbers to make it easier for knn
 convertedx = convert_to_numbers(X)
+convertedx = convertedx.pop()
 # the Y (expected output) converted into the 3 closest bass for each test input
 convertedy = MatchBasses(Y, convertedx)
 # the test output converted into just numbers to make it easier for knn
@@ -251,15 +252,20 @@ for i in range(len(convertedy)):
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
 neighbor.fit(convertedx, yarray)
 
-#saves the knn model to a file so next time I predict something it will be waaaaay faster
-joblib.dump(neighbor, 'MusicHarmonizerModel.pkl')
-convertedx.to_pickle(convertedx.pkl)
-convertedy.to_pickle(convertedy.pkl)
+# saves the knn model to a file so next time I predict something it will be waaaaay faster
+# joblib.dump(neighbor, 'MusicHarmonizerModel.pkl')
+xpickle = open('xpickle.obj', 'w')
+pickle.dump(convertedx, xpickle)
+ypickle = open('ypickle.obj', 'w')
+pickle.dump(convertedy, ypickle)
 
-#loads the knn model
+# loads the knn model
+xpickle = open('xpickle.obj', 'r')
+ypickle = open('ypickle.obj', 'r')
+convertedx = xpickle
+convertedy = ypickle
 neighbor = joblib.load('MusicHarmonizerModel.pkl')
-convertedx = pd.read_pickle(convertedx.pkl)
-convertedy=pd.read_pickle(convertedy.pkl)
+
 
 # stores the prediction indexs in an array
 predictionsindex = neighbor.predict(convertedinput)
@@ -312,7 +318,7 @@ for index in range(len(convertedinput)):
             track2endtime = note['Time']
 
         input_midifile = input_midifile.append(note)
-input_midifile = input_midifile.sort_values(['Track','Time'])
+input_midifile = input_midifile.sort_values(['Track', 'Time'])
 
 # fixes the end track time and adds it to the output database
 for index, note in input_track2endtrack.iterrows():
@@ -322,12 +328,12 @@ for index, note in input_track2endtrack.iterrows():
 
 # adds the end of file thing to the end of the output database
 for index, note in input_end_of_file.iterrows():
-    input_midifile = input_midifile.append(note) 
+    input_midifile = input_midifile.append(note)
 
 input_midifile.to_csv('test.csv', index=0, header=0, encoding='utf-8')
 
 harmonized = []
-nonfloatharm=[]
+nonfloatharm = []
 
 with open('test.csv', 'r') as csvfile:
     reader = csv.reader(csvfile, delimiter=' ', skipinitialspace=True)
@@ -336,10 +342,10 @@ with open('test.csv', 'r') as csvfile:
 
 for x in harmonized:
     x = x.replace(".0", "")
-    for i in range(0,5):
+    for i in range(0, 5):
         x = x.replace(",,", ",")
-        x=x.replace('\"\"\"', '\"')
-    x=x.strip(",")
+        x = x.replace('\"\"\"', '\"')
+    x = x.strip(",")
     nonfloatharm.append(x)
 
 midi_object = py_midicsv.csv_to_midi(nonfloatharm)
