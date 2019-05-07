@@ -3,21 +3,21 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 import csv
+from sklearn.externals import joblib
+import pickle
 
 
-# creates a csv string from the midi
-csv_string = py_midicsv.midi_to_csv(
-    "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
+# # creates a csv string from the midi
+# csv_string = py_midicsv.midi_to_csv(
+#     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
-csv_input = py_midicsv.midi_to_csv("Music\Input\lose_yourself_topline.mid")
+csv_input = py_midicsv.midi_to_csv("Music\Input\\userinput.mid")
 
-# print(csv_input)
-
-# writes the csv string into a file so that its easier for panda to turn it into a data fram
-file = open("csv_string.csv", "w")
-for data in csv_string:
-        file.write("%s" % data)
-file.close()
+# # writes the csv string into a file so that its easier for panda to turn it into a data fram
+# file = open("csv_string.csv", "w")
+# for data in csv_string:
+#         file.write("%s" % data)
+# file.close()
 
 file = open("csv_input.csv", "w")
 for data in csv_input:
@@ -25,14 +25,12 @@ for data in csv_input:
 file.close()
 
 # creates a data frame from the csv file
-midifile = pd.read_csv('csv_string.csv', header=None, names=[
+midifile = pd.read_csv('midi_note_dataset.csv', header=None, names=[
                        'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
 # creates a data frame of the user input
 input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
     'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity', 'Extra'], usecols=[0, 1, 2, 3, 4, 5, 6])
-
-# print(input_midifile)
 
 # seperates the important format stuff from the note stuff in the midi file
 input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
@@ -60,7 +58,6 @@ input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' Header']
 
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
 
-# print(input_midifile)
 # The order of the data bases will be
 # [
 #   input_track1stuff,
@@ -72,21 +69,13 @@ input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
 #   input_end_of_file
 # ]
 
-# print("hi")
-
-
-# print(input_importantstuff)
-
-# print(input_midifile.head())
 
 # only takes in the information with the " Note_on_c" in it
 midifile = midifile[midifile.Note_on_c == ' Note_on_c']
 
-# print(midifile.head())
 
 # split up the data between the treble and bass
 X = midifile[midifile.Track != 2]
-# print(X.head)
 Y = midifile[midifile.Track != 1]
 
 
@@ -192,8 +181,6 @@ def MatchBasses(Y, BigMombaNoteArray):
 
     BassSet = []
 
-    # print(len(BigMombaNoteArray))
-
     # look through all the sets of notes in the BigMombaNoteArray for matching bass notes
     for notesets in BigMombaNoteArray:
         # print(notesets)
@@ -254,19 +241,25 @@ convertedy = MatchBasses(Y, convertedx)
 # the test output converted into just numbers to make it easier for knn
 convertedinput = convert_to_numbers(input_midifile)
 
-# print(convertedy)
-
 yarray = []  # y arraay used for the predicted indexs of the convertedy array
 
 # loops through the number of indexs for the array and stores them in the yarray
 for i in range(len(convertedy)):
     yarray.append(i)
 
-# print(convertedx)
-
 # does all the k nearest neighbor stuff
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
 neighbor.fit(convertedx, yarray)
+
+#saves the knn model to a file so next time I predict something it will be waaaaay faster
+joblib.dump(neighbor, 'MusicHarmonizerModel.pkl')
+convertedx.to_pickle(convertedx.pkl)
+convertedy.to_pickle(convertedy.pkl)
+
+#loads the knn model
+neighbor = joblib.load('MusicHarmonizerModel.pkl')
+convertedx = pd.read_pickle(convertedx.pkl)
+convertedy=pd.read_pickle(convertedy.pkl)
 
 # stores the prediction indexs in an array
 predictionsindex = neighbor.predict(convertedinput)
@@ -276,8 +269,6 @@ predictions = []  # this is where the real predictions are stored
 # loops through the prediction index array and stores the correct predictions in it (by using the indexs inside the convertedy array)
 for index in predictionsindex:
     predictions.append(convertedy[index])
-
-# print(predictions)
 
 # this adds that track1 format stuff to the database that we are outputing
 for index, note in input_midifile.iterrows():
@@ -293,8 +284,6 @@ for index, note in input_track1endtrack.iterrows():
 for index, note in input_track2stuff.iterrows():
     input_midifile = input_midifile.append(note)
 
-# print(input_midifile)
-
 track2endtime = 0  # used to find what tick track2 ends on
 
 # looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
@@ -308,19 +297,14 @@ for index in range(len(convertedinput)):
     # look for the specific predicted output for the specific input
     predictset = predictions[index]
 
-    # print((predictset[0])['Time'])
-
     # looks at the initial time for the specific predicted set
     PredictionsStart = (predictset[0])['Time']
 
     # does simple math find the distance between the two different initial time spots
     distance = PredictionsStart - NotesetStart
 
-    # print(predictset)
-
     # fixes the times for the predicted set to shift to the right spot for the input and then adds it to the dataframe with the input
     for note in predictset:
-        # print(note)
         note.at['Time'] = (note['Time'] - distance)
 
         # keep look for the largest time point to pick what is the end tick for track 2
@@ -329,8 +313,6 @@ for index in range(len(convertedinput)):
 
         input_midifile = input_midifile.append(note)
 input_midifile = input_midifile.sort_values(['Track','Time'])
-
-print(input_midifile)
 
 # fixes the end track time and adds it to the output database
 for index, note in input_track2endtrack.iterrows():
@@ -360,22 +342,8 @@ for x in harmonized:
     x=x.strip(",")
     nonfloatharm.append(x)
 
-# print(nonfloatharm)
 midi_object = py_midicsv.csv_to_midi(nonfloatharm)
-
-print(midi_object)
 
 with open("harmonized.mid", "wb") as output_file:
     midi_writer = py_midicsv.FileWriter(output_file)
     midi_writer.write(midi_object)
-
-csv_string = py_midicsv.midi_to_csv("harmonized.mid")
-
-
-# print(csv_string)
-
-# writes the csv string into a file so that its easier for panda to turn it into a data fram
-file = open("fixstuff.csv", "w")
-for data in csv_string:
-        file.write("%s" % data)
-file.close()
