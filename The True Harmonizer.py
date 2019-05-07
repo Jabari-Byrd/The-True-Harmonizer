@@ -176,7 +176,6 @@ def convert_to_numbers(X):
 
 
 def MatchBasses(Y, BigMombaNoteArray):
-    LastBassUsed = 0  # the last bass note that was matched to a treble
     i = 0  # counter used to make sure that you dont use more than 3 basses
     BassMambaDamba = []  # the set of bassnotes that match with the treble
 
@@ -193,44 +192,30 @@ def MatchBasses(Y, BigMombaNoteArray):
         BassSet = []
         i = 0
 
+        Y=Y.values
+
+        index=0
         # look through all the bass notes to find a match with the treble set
-        for index2, basses in Y.iterrows():
+        for bassSet in Y[index:]:
 
-            # checks to make sure that the bass you are looking at is not repeated
-            if (index2 > LastBassUsed):
-
-                # if the tick count of the bass is in the range of the treble set, match it up
-                if (int(basses['Time']) in range(startrange, endrange)):
-
-                    LastBassUsed = index2  # make this the last used bass note
-                    # print("hi")
-                    if(basses['Velocity'] > 0):
-                        BassSet.append(basses)  # add this bass to the Bass Set
-                        for index3, bass in Y.iterrows():
-                            if (index3 > index2):
-                                if (bass['Note'] == basses['Note']):
-                                    if (bass['Velocity'] == 0):
-                                        BassSet.append(bass)
-                                        break
+            # if the tick count of the bass is in the range of the treble set, match it up
+            if (int(bassSet[1]) in range(startrange, endrange)):
+                if(bassSet[5] > 0):
+                    BassSet.append(bassSet)  # add this bass to the Bass Set
+                    for bassend in Y[index:]:
+                        if (bassend[4] == bassSet[4]):
+                            if (bassend[5] == 0):
+                                BassSet.append(bassend)
+                                break
 
                     i += 1  # add one to the counter of basses
 
-                    # if there is 3 basses in a set, break the loop
-                    if (i == 3):
-                        # print(notesets)
-                        # print(len(BassSet))
-                        BassMambaDamba.append(BassSet)
-                        break
-
                 # if the basses are at a higher tick count, you have used all your basses you can within rang so break the loop
-                elif (basses['Time'] > endrange):
-                    # print(notesets)
-                    BassMambaDamba.append(BassSet)
-                    break
+            if (bassSet[1] > endrange):
+                BassMambaDamba.append(BassSet)
+                break
 
-                # else you still have more to search through
-                else:
-                    continue
+        index+=1
 
     return BassMambaDamba
 
