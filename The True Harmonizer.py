@@ -97,24 +97,27 @@ def convert_to_numbers(X):
     # this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
     numberofnotes = 2
 
+    X = X.values
+
+    index = 0
+
     # a bunch of code to pick out groups of notes and put it into the SetOfNotes array.
     # The features are the note, note length, and note start time
-    for index, note in X.iterrows():
+    for noteset in X:
         # only use notes that have been played, not ones that have been stopped
-        if (note['Velocity'] > 0):
+        if (noteset[5] > 0):
 
             # if its the first note of the group, you need to use the notes start time as the total start time too
             if i == 0:
 
-                totalstarttime = note['Time']
+                totalstarttime = noteset[1]
 
                 # find when the note has stopped and make the the end time
-                for index2, end in X.iterrows():
-                    if index2 > index:
-                        if end['Note'] == note['Note']:
-                            if end['Velocity'] == 0:
-                                endtime = end['Time']
-                                break
+                for endset in X[index:]:
+                    if endset[4] == noteset[4]:
+                        if endset[5] == 0:
+                            endtime = endset[1]
+                            break
 
                 # the start of the array will be the total start time so we can know what range the
                 # notes lie and and make it easier to find the bass notes
@@ -122,31 +125,29 @@ def convert_to_numbers(X):
 
             # if its the final note of the group, you need to use the notes end time as the total end time too.
             elif i == numberofnotes:
-                starttime = note['Time']  # used to know the length of the note
+                starttime = noteset[1]  # used to know the length of the note
 
                 # find when the note has stopped and make the the end time and total end time
-                for index2, end in X.iterrows():
-                    if index2 > index:
-                        if end['Note'] == note['Note']:
-                            if end['Velocity'] == 0:
-                                totalendtime = end['Time']
-                                break
+                for endset in X[index:]:
+                    if endset[4] == noteset[4]:
+                        if endset[5] == 0:
+                            totalendtime = endset[1]
+                            break
                 SetOfNotes.append(starttime)
 
             else:
-                starttime = note['Time']  # used to know the length of the note
+                starttime = noteset[1]  # used to know the length of the note
 
                 # find when the note has stopped and make that the end time
-                for index2, end in X.iterrows():
-                    if index2 > index:
-                        if end['Note'] == note['Note']:
-                            if end['Velocity'] == 0:
-                                endtime = end['Time']
-                                break
+                for endset in X[index:]:
+                    if endset[4] == noteset[4]:
+                        if endset[5] == 0:
+                            endtime = endset[1]
+                            break
                 SetOfNotes.append(starttime)
 
             # adds note to the SetOfNotes array
-            SetOfNotes.append(int(note['Note']))
+            SetOfNotes.append(int(noteset[4]))
             notelength = endtime - starttime  # calculates the length of the note
             # print(endtime)
             # print("hi")
@@ -170,7 +171,7 @@ def convert_to_numbers(X):
             else:
                 SetOfNotes.append(notelength)
                 i += 1
-
+        index+=1
     return BigMombaNoteArray
 
 
