@@ -2,25 +2,28 @@ import py_midicsv
 import numpy as np
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
+import csv
 
 
 # creates a csv string from the midi
 csv_string = py_midicsv.midi_to_csv(
     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
-# print(type(csv_string[0]))
+# print(csv_string)
 
 csv_input = py_midicsv.midi_to_csv("Music\Input\lose_yourself_topline.mid")
+
+# print(csv_input)
 
 # writes the csv string into a file so that its easier for panda to turn it into a data fram
 file = open("csv_string.csv", "w")
 for data in csv_string:
-    file.write("%s" % data)
+        file.write("%s" % data)
 file.close()
 
 file = open("csv_input.csv", "w")
 for data in csv_input:
-    file.write("%s" % data)
+        file.write("%s" % data)
 file.close()
 
 # creates a data frame from the csv file
@@ -31,6 +34,7 @@ midifile = pd.read_csv('csv_string.csv', header=None, names=[
 input_midifile = pd.read_csv('csv_input.csv', header=None, names=[
     'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity', 'Extra'], usecols=[0, 1, 2, 3, 4, 5, 6])
 
+# print(input_midifile)
 
 # seperates the important format stuff from the note stuff in the midi file
 input_importantstuff = input_midifile[input_midifile.Note_on_c != ' Note_on_c']
@@ -58,7 +62,7 @@ input_track2stuff = input_track2stuff[input_track2stuff.Note_on_c != ' Header']
 
 input_midifile = input_midifile[input_midifile.Note_on_c == ' Note_on_c']
 
-
+# print(input_midifile)
 # The order of the data bases will be
 # [
 #   input_track1stuff,
@@ -330,19 +334,43 @@ for index in range(len(convertedinput)):
 # fixes the end track time and adds it to the output database
 for index, note in input_track2endtrack.iterrows():
     if (note['Note_on_c'] == ' End_track'):
-        note.at['Time'] = track2endtime
+        note.at['Time'] = track2endtime+1
     input_midifile = input_midifile.append(note)
 
 # adds the end of file thing to the end of the output database
 for index, note in input_end_of_file.iterrows():
     input_midifile = input_midifile.append(note)
 
+# input_midifile['Velocity'].fillna(-1)
+# input_midifile['Velocity'].astype(int)
+# input_midifile['Velocity'].replace(-1, np.nan)
+# input_midifile['Extra'] = input_midifile.loc['Extra'].fillna(-1)
+# input_midifile['Extra'] = input_midifile.loc['Extra'].astype(int)
+# input_midifile['Extra'] = input_midifile.loc['Extra'].replace(-1, np.nan)
+# input_midifile['Channel'] = input_midifile.loc['Channel'].fillna(-1)
+# input_midifile['Channel'] = input_midifile.loc['Channel'].astype(int)
+# input_midifile['Channel'] = input_midifile.loc['Channel'].replace(-1, np.nan)
 
-print(input_midifile)
 input_midifile.to_csv('test.csv', index=0, header=0)
 
-# midi_object=py_midicsv.csv_to_midi(input_midifile.to_csv(sep='\n', index=0, header=0))
+harmonized = []
+nonfloatharm=[]
 
-# with open("harmonized.mid", "wb") as output_file:
-#     midi_writer = py_midicsv.FileWriter(output_file)
-#     midi_writer.write(midi_object)
+with open('test.csv', 'r') as csvfile:
+    reader = csv.reader(csvfile, delimiter=' ', skipinitialspace=True)
+    for row in reader:
+        harmonized.append(''.join(row))
+
+for x in harmonized:
+    x = x.replace(".0", "")
+    for i in range(0,5):
+        x = x.replace(",,", ",")
+    x=x.strip(",")
+    nonfloatharm.append(x)
+# print(nonfloatharm)
+
+midi_object = py_midicsv.csv_to_midi(nonfloatharm)
+
+with open("harmonized.mid", "wb") as output_file:
+    midi_writer = py_midicsv.FileWriter(output_file)
+    midi_writer.write(midi_object)
