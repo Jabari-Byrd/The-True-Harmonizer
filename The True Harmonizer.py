@@ -12,7 +12,7 @@ import pickle
 #     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
 csv_input = py_midicsv.midi_to_csv("Music\Input\\userinput.mid")
-
+# print(csv_input)
 # # writes the csv string into a file so that its easier for panda to turn it into a data fram
 # file = open("csv_string.csv", "w")
 # for data in csv_string:
@@ -95,7 +95,7 @@ def convert_to_numbers(X):
     BigMombaNoteArray = []
 
     # this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
-    numberofnotes = 2
+    numberofnotes = 3
 
     X = X.values
 
@@ -171,19 +171,18 @@ def convert_to_numbers(X):
             else:
                 SetOfNotes.append(notelength)
                 i += 1
-        index+=1
+        index += 1
     return BigMombaNoteArray
 
 
 def MatchBasses(Y, BigMombaNoteArray):
     i = 0  # counter used to make sure that you dont use more than 3 basses
     BassMambaDamba = []  # the set of bassnotes that match with the treble
-
     BassSet = []
+    Y = Y.values
 
     # look through all the sets of notes in the BigMombaNoteArray for matching bass notes
     for notesets in BigMombaNoteArray:
-        # print(notesets)
         # the start time for the range of particular notes in the set
         startrange = notesets[0]
         # the end time for the range of particular notes in the set
@@ -192,9 +191,7 @@ def MatchBasses(Y, BigMombaNoteArray):
         BassSet = []
         i = 0
 
-        Y=Y.values
-
-        index=0
+        index = 0
         # look through all the bass notes to find a match with the treble set
         for bassSet in Y[index:]:
 
@@ -215,14 +212,12 @@ def MatchBasses(Y, BigMombaNoteArray):
                 BassMambaDamba.append(BassSet)
                 break
 
-        index+=1
-
+        index += 1
     return BassMambaDamba
 
 
 # The X (train input) converted into just numbers to make it easier for knn
 convertedx = convert_to_numbers(X)
-convertedx = convertedx.pop()
 # the Y (expected output) converted into the 3 closest bass for each test input
 convertedy = MatchBasses(Y, convertedx)
 # the test output converted into just numbers to make it easier for knn
@@ -231,27 +226,13 @@ convertedinput = convert_to_numbers(input_midifile)
 yarray = []  # y arraay used for the predicted indexs of the convertedy array
 
 # loops through the number of indexs for the array and stores them in the yarray
-for i in range(len(convertedy)):
+for i in range(len(convertedy)+1):
     yarray.append(i)
 
 # does all the k nearest neighbor stuff
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
+# print(convertedx)
 neighbor.fit(convertedx, yarray)
-
-# saves the knn model to a file so next time I predict something it will be waaaaay faster
-# joblib.dump(neighbor, 'MusicHarmonizerModel.pkl')
-xpickle = open('xpickle.obj', 'w')
-pickle.dump(convertedx, xpickle)
-ypickle = open('ypickle.obj', 'w')
-pickle.dump(convertedy, ypickle)
-
-# loads the knn model
-xpickle = open('xpickle.obj', 'r')
-ypickle = open('ypickle.obj', 'r')
-convertedx = xpickle
-convertedy = ypickle
-neighbor = joblib.load('MusicHarmonizerModel.pkl')
-
 
 # stores the prediction indexs in an array
 predictionsindex = neighbor.predict(convertedinput)
@@ -285,27 +266,32 @@ for index in range(len(convertedinput)):
 
     # the first note has the initial time spot for the set
     NotesetStart = int(noteset[0])
-
+    if not predictions[index]:
+        continue
     # look for the specific predicted output for the specific input
     predictset = predictions[index]
 
     # looks at the initial time for the specific predicted set
-    PredictionsStart = (predictset[0])['Time']
+    print(predictset)
+    PredictionsStart = (predictset[0])[1]
 
     # does simple math find the distance between the two different initial time spots
     distance = PredictionsStart - NotesetStart
 
     # fixes the times for the predicted set to shift to the right spot for the input and then adds it to the dataframe with the input
     for note in predictset:
-        note.at['Time'] = (note['Time'] - distance)
+        note[1] = (note[1] - distance)
 
         # keep look for the largest time point to pick what is the end tick for track 2
-        if note['Time'] > track2endtime:
-            track2endtime = note['Time']
-
-        input_midifile = input_midifile.append(note)
+        if note[1] > track2endtime:
+            track2endtime = note[1]
+        # pd.DataFrame([note], columns=['Track', 'Time',
+        #                             'Note_on_c', 'Channel', 'Note', 'Velocity'])
+        input_midifile = input_midifile.append(pd.DataFrame([note], columns=[
+                                               'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity']), sort=False)
+print("hi")
 input_midifile = input_midifile.sort_values(['Track', 'Time'])
-
+print("hi")
 # fixes the end track time and adds it to the output database
 for index, note in input_track2endtrack.iterrows():
     if (note['Note_on_c'] == ' End_track'):
