@@ -12,7 +12,7 @@ import pickle
 #     "Music\Rap\Four_five_seconds_-_Rihanna_Paul_McCartney_Kanye_West.mid")
 
 csv_input = py_midicsv.midi_to_csv("Music\Input\\userinput.mid")
-# print(csv_input)
+
 # # writes the csv string into a file so that its easier for panda to turn it into a data fram
 # file = open("csv_string.csv", "w")
 # for data in csv_string:
@@ -95,7 +95,7 @@ def convert_to_numbers(X):
     BigMombaNoteArray = []
 
     # this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
-    numberofnotes = 3
+    numberofnotes = 4
 
     X = X.values
 
@@ -149,8 +149,6 @@ def convert_to_numbers(X):
             # adds note to the SetOfNotes array
             SetOfNotes.append(int(noteset[4]))
             notelength = endtime - starttime  # calculates the length of the note
-            # print(endtime)
-            # print("hi")
 
             # adds the note length calculation to the SetOfNotes array
 
@@ -226,12 +224,11 @@ convertedinput = convert_to_numbers(input_midifile)
 yarray = []  # y arraay used for the predicted indexs of the convertedy array
 
 # loops through the number of indexs for the array and stores them in the yarray
-for i in range(len(convertedy)+1):
+for i in range(len(convertedy)):
     yarray.append(i)
 
 # does all the k nearest neighbor stuff
 neighbor = KNeighborsClassifier(weights='distance', algorithm='auto')
-# print(convertedx)
 neighbor.fit(convertedx, yarray)
 
 # stores the prediction indexs in an array
@@ -272,7 +269,6 @@ for index in range(len(convertedinput)):
     predictset = predictions[index]
 
     # looks at the initial time for the specific predicted set
-    print(predictset)
     PredictionsStart = (predictset[0])[1]
 
     # does simple math find the distance between the two different initial time spots
@@ -289,9 +285,9 @@ for index in range(len(convertedinput)):
         #                             'Note_on_c', 'Channel', 'Note', 'Velocity'])
         input_midifile = input_midifile.append(pd.DataFrame([note], columns=[
                                                'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity']), sort=False)
-print("hi")
+
 input_midifile = input_midifile.sort_values(['Track', 'Time'])
-print("hi")
+
 # fixes the end track time and adds it to the output database
 for index, note in input_track2endtrack.iterrows():
     if (note['Note_on_c'] == ' End_track'):
