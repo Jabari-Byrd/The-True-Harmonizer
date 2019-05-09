@@ -25,7 +25,7 @@ for data in csv_input:
 file.close()
 
 # creates a data frame from the csv file
-midifile = pd.read_csv('midi_note_dataset.csv', header=None, names=[
+midifile = pd.read_csv('midi_notes.csv', header=None, names=[
                        'Track', 'Time', 'Note_on_c', 'Channel', 'Note', 'Velocity'], usecols=[0, 1, 2, 3, 4, 5])
 
 # creates a data frame of the user input

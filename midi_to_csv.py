@@ -33,7 +33,7 @@ for filename in os.listdir(path):
         #print(type(csv_string[0]))
 
         for data in csv_string:
-            print(data)
+            # print(data)
             temp = data.split()
             #print(temp)
             if temp[2] == "Note_on_c," and (temp[0] == "1," or temp[0] == "2,"):
