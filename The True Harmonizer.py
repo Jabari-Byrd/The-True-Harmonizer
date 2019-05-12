@@ -1,7 +1,7 @@
 import py_midicsv
 import numpy as np
 import pandas as pd
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors.nearest_centroid import NearestCentroid
 import csv
 from sklearn.externals import joblib
 import pickle
@@ -80,11 +80,15 @@ Y = midifile[midifile.Track != 1]
 
 # this is the number of notes that the program is looking at.  You can change this so that the program looks at more or less notes
 numberofnotes = 3
-ShiftToZero=0
 arrayoftimes = []
-justnotes = []
-temp=[]
+
+for i in range(1, 11):
+    if (i > 2 and i % (len(input_midifile)) == 0):
+        numberofnotes = i
+
+
 def convert_to_numbers(X):
+
     i = 0  # counter used to split up the notes
 
     totalstarttime = 0  # used to find the complete start time of the note group
@@ -114,9 +118,6 @@ def convert_to_numbers(X):
 
                 totalstarttime = noteset[1]
                 arrayoftimes.append(totalstarttime)
-                # used to shift the note lengths to zero so that they can match with other song notes
-                ShiftToZero = totalstarttime
-                totalstarttime=totalstarttime-ShiftToZero
 
                 # find when the note has stopped and make the the end time
                 for endset in X[index:]:
@@ -125,39 +126,32 @@ def convert_to_numbers(X):
                             endtime = endset[1]
                             break
 
-                # the start of the array will be the total start time so we can know what range the
-                # notes lie and and make it easier to find the bass notes
-                SetOfNotes.append(totalstarttime)
-
             # if its the final note of the group, you need to use the notes end time as the total end time too.
             elif i == numberofnotes:
                 starttime = noteset[1]  # used to know the length of the note
-                starttime=starttime-ShiftToZero
                 # find when the note has stopped and make the the end time and total end time
                 for endset in X[index:]:
                     if endset[4] == noteset[4]:
                         if endset[5] == 0:
+                            endtime = endset[1]
                             totalendtime = endset[1]
                             arrayoftimes.append(totalendtime)
-                            totalendtime=totalendtime-ShiftToZero
                             break
-                SetOfNotes.append(starttime)
 
             else:
                 starttime = noteset[1]  # used to know the length of the note
 
-                starttime=starttime-ShiftToZero #shifts start to zero
                 # find when the note has stopped and make that the end time
                 for endset in X[index:]:
                     if endset[4] == noteset[4]:
                         if endset[5] == 0:
                             endtime = endset[1]
                             break
-                SetOfNotes.append(starttime)
 
             # adds note to the SetOfNotes array
             SetOfNotes.append(int(noteset[4]))
             notelength = endtime - starttime  # calculates the length of the note
+            SetOfNotes.append(notelength)
 
             # adds the note length calculation to the SetOfNotes array
 
@@ -167,16 +161,11 @@ def convert_to_numbers(X):
             if (i == numberofnotes):
                 i = 0
 
-                # the end of the array will be the total end time so we can know what range the
-                # notes lie and and make it easier to find the bass notes
-                SetOfNotes.append(totalendtime)
-
                 BigMombaNoteArray.append(SetOfNotes)
 
                 SetOfNotes = []
 
             else:
-                SetOfNotes.append(notelength)
                 i += 1
         index += 1
     return BigMombaNoteArray
@@ -187,20 +176,20 @@ def MatchBasses(Y, BigMombaNoteArray):
     BassMambaDamba = []  # the set of bassnotes that match with the treble
     BassSet = []
     Y = Y.values
-    timearraycounter=0
+    timearraycounter = 0
     # look through all the sets of notes in the BigMombaNoteArray for matching bass notes
     for notesets in BigMombaNoteArray:
         # the start time for the range of particular notes in the set
         startrange = arrayoftimes[timearraycounter]
-        
+
         if (timearraycounter < len(BigMombaNoteArray)):
             timearraycounter += 1
         # the end time for the range of particular notes in the set
         endrange = arrayoftimes[timearraycounter]
 
         if (timearraycounter < len(BigMombaNoteArray)):
-            timearraycounter += 1
-            
+            timearraycounter += 2
+
         endtime = 0
         BassSet = []
         i = 0
@@ -216,8 +205,9 @@ def MatchBasses(Y, BigMombaNoteArray):
                     for bassend in Y[index:]:
                         if (bassend[4] == bassSet[4]):
                             if (bassend[5] == 0):
-                                BassSet.append(bassend)
-                                break
+                                if(bassend[1] > bassSet[1]):
+                                    BassSet.append(bassend)
+                                    break
 
                     i += 1  # add one to the counter of basses
                 # if the basses are at a higher tick count, you have used all your basses you can within rang so break the loop
@@ -227,6 +217,21 @@ def MatchBasses(Y, BigMombaNoteArray):
 
         index += 1
     return BassMambaDamba
+
+
+def deletewaste(x, y, indexarray):
+    loop = len(indexarray)
+    i = 0
+    while i < loop:
+        if not y[i]:
+            del arrayoftimes[i + 1]
+            del arrayoftimes[i]
+            del x[i]
+            del y[i]
+            del indexarray[-1]
+            loop -= 1
+            i -= 1
+        i += 1
 
 
 # The X (train input) converted into just numbers to make it easier for knn
@@ -240,22 +245,26 @@ convertedinput = convert_to_numbers(input_midifile)
 indexarray = []  # y array used for the predicted indexs of the convertedy array
 
 
-
 # loops through the number of indexs for the array and stores the each index numer in the indexarray
 for i in range(len(convertedy)):
     indexarray.append(i)
 
+deletewaste(convertedx, convertedy, indexarray)
+
 # does all the k nearest neighbor stuff
-neighbor = KNeighborsClassifier(n_neighbors=5,weights='distance', algorithm='auto')
+neighbor = NearestCentroid()
 neighbor.fit(convertedx, indexarray)
 
-# stores the prediction indexs in an array
-predictionsindex=(neighbor.predict(convertedinput))
+predictionsindex = []
 
+# stores the prediction indexs in an array
+predictionsindex.append((neighbor.predict(convertedinput)))
+
+print(predictionsindex[0])
 predictions = []  # this is where the real predictions are stored
 
 # loops through the prediction index array and stores the correct predictions in it (by using the indexs inside the convertedy array)
-for index in predictionsindex:
+for index in predictionsindex[0]:
     predictions.append(convertedy[index])
 
 # this adds that track1 format stuff to the database that we are outputing
@@ -273,18 +282,10 @@ for index, note in input_track2stuff.iterrows():
 
 track2endtime = 0  # used to find what tick track2 ends on
 
-for index in convertedx:
-    print(index)
-
-for index in convertedinput:
-    print(index)
 # looks through all the convertedinput elements to calculate the distances between the input notes and the prediction notes
 for index in range(len(convertedinput)):
-
     # the first note has the initial time spot for the set
-    NotesetStart = arrayoftimes[index + len(convertedx)*2+1]
-    if not predictions[index]:
-        continue
+    NotesetStart = arrayoftimes[index*2 + len(convertedx) * 2 + 1]
     # look for the specific predicted output for the specific input
     predictset = predictions[index]
     # looks at the initial time for the specific predicted set
